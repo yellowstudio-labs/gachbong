@@ -9,19 +9,52 @@ void renderVayCa(IRenderer &r, const Palette &p, double cx, double cy,
                  double s) {
   double h = s * 0.5;
   fillTileSquare(r, cx, cy, s, p.background);
+  // Perfect Symmetrical Fish Scale Rendering with original overlap ratio.
+  // Pre-calculate exact centers and bounds to guarantee it fits
+  // beautifully and symmetrically within the tile.
 
-  double scaleR = h * 0.38;
+  // Restore the original radius scale so arcs are nicely sized
+  double r_arc = h * 0.35;
+  double dx = r_arc * 2.0;
+
+  // Restore the original 1.3x interlocking overlap distance!
+  // This is what makes "Vảy Cá" look like scales instead of tight circles.
+  double dy = r_arc * 1.3;
+
   Color scaleColors[] = {p.primary, p.secondary};
 
-  for (int row = -1; row <= 2; row++) {
-    for (int col = -1; col <= 2; col++) {
-      double offsetX = (row % 2 != 0) ? scaleR : 0;
-      double sx = cx - h + col * scaleR * 2.0 + offsetX;
-      double sy = cy - h + row * scaleR * 1.3;
-      int colorIdx = (row + col + 4) % 2;
-      r.drawArc({sx, sy}, scaleR, M_PI, 2.0 * M_PI, scaleColors[colorIdx]);
-      r.drawArc({sx, sy}, scaleR, M_PI, 2.0 * M_PI, Color(0, 0, 0, 0), p.detail,
-                0.8);
+  // We render a block of 4 rows.
+  // The block height is: Top of Row 0 to Bottom of Row 3.
+  // Top of Row 0: sy0 - r_arc
+  // Bottom of Row 3: sy0 + 3 * dy
+  // Center of block: sy0 + 1.5 * dy - r_arc / 2.0. We set this to cy.
+  double y0 = cy - (1.5 * dy) + (r_arc / 2.0);
+
+  // Render 4 alternating rows to form the fish scale pattern
+  for (int row = 0; row < 4; row++) {
+    double sy = y0 + row * dy;
+
+    // To be perfectly symmetrical:
+    // Even rows (0, 2) have 3 arcs. Odd rows (1, 3) have 2 arcs.
+    int numArcs = (row % 2 == 0) ? 3 : 2;
+
+    // Calculate the X-coordinate of the first (leftmost) arc in this row
+    double startXOffset = (numArcs == 3) ? -dx : -dx / 2.0;
+
+    for (int col = 0; col < numArcs; col++) {
+      double sx = cx + startXOffset + col * dx;
+
+      // Ensure alternating colors
+      int colorIdx = (row + col) % 2;
+
+      // Draw top half of circle
+      r.drawArc({sx, sy}, r_arc, M_PI, 2.0 * M_PI, scaleColors[colorIdx]);
+
+      // Draw stroke
+      double arcLineWidth = s * 0.015;
+      r.drawArc({sx, sy}, r_arc, M_PI, 2.0 * M_PI, Color(0, 0, 0, 0), p.detail,
+                arcLineWidth);
+      r.drawLine({sx - r_arc, sy}, {sx + r_arc, sy}, p.detail, arcLineWidth);
     }
   }
   strokeTileSquare(r, cx, cy, s, p.detail, 1.0);

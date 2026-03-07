@@ -4,23 +4,31 @@ import { playIntroMusic, stopIntroMusic } from '../music/strudelIntro';
 import { playHoaChanhMusic, stopHoaChanhMusic } from '../music/strudelHoaChanh';
 import '../styles/MusicVideo.css';
 
+let globalAudioContext: AudioContext | null = null;
+
 /**
  * iOS Safari requires AudioContext to be resumed synchronously within a
- * user gesture event handler. This helper plays a single-frame silent buffer
- * to unlock the Web Audio API, allowing subsequent async audio (like Strudel)
- * to play correctly.
+ * user gesture event handler. This helper synchronously creates (if needed),
+ * plays a single-frame silent buffer to unlock the Web Audio API, and
+ * returns the AudioContext so it can be passed to Strudel.
  */
-async function unlockAudioContext(): Promise<void> {
-    const ctx = new AudioContext();
+async function getUnlockedAudioContext(): Promise<AudioContext> {
+    if (!globalAudioContext) {
+        globalAudioContext = new AudioContext();
+    }
+    const ctx = globalAudioContext;
+
+    // Play silent buffer to unlock
     const silentBuffer = ctx.createBuffer(1, 1, 22050);
     const source = ctx.createBufferSource();
     source.buffer = silentBuffer;
     source.connect(ctx.destination);
     source.start(0);
+
     if (ctx.state === 'suspended') {
         await ctx.resume();
     }
-    await ctx.close();
+    return ctx;
 }
 
 interface MusicPlayerProps {
@@ -46,7 +54,7 @@ const RENDER_OPTIONS: RenderOptions = {
 const MV_TRACKS: Record<string, {
     name: string;
     subtitle: string;
-    play: () => Promise<void>;
+    play: (ctx?: AudioContext) => Promise<void>;
     stop: () => Promise<void>;
     patternIdx: number;
     paletteIdx: number;
@@ -166,9 +174,9 @@ export function MusicPlayer({ engine, mvId, onBack, duration = 120 }: MusicPlaye
             await track.stop();
             setPlaying(false);
         } else {
-            // Unlock Web Audio on iOS — must be called before any await
-            // so that it runs synchronously within the user gesture frame.
-            await unlockAudioContext();
+            // Unlock Web Audio on iOS — must be called synchronously within
+            // the user gesture frame. We then pass this to Strudel.
+            const ctx = await getUnlockedAudioContext();
 
             // Play / resume
             if (elapsed > 0 && elapsed < duration) {
@@ -178,7 +186,7 @@ export function MusicPlayer({ engine, mvId, onBack, duration = 120 }: MusicPlaye
                 startTimeRef.current = performance.now() / 1000;
                 setElapsed(0);
             }
-            await track.play();
+            await track.play(ctx);
             setPlaying(true);
         }
     }, [playing, elapsed, duration, track]);

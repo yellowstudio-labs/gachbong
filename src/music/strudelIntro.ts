@@ -72,33 +72,33 @@ stack(
 let strudelReady = false;
 let strudelInitPromise: Promise<unknown> | null = null;
 
-export async function initStrudelMusic(): Promise<void> {
-    if (strudelReady) return;
-    if (strudelInitPromise) {
-        await strudelInitPromise;
-        return;
-    }
-
-    strudelInitPromise = (async () => {
-        const { initStrudel } = await import('@strudel/web');
-        await initStrudel();
-        strudelReady = true;
-    })();
-
+export async function initStrudelMusic(ctx?: AudioContext): Promise<void> {
+  if (strudelReady) return;
+  if (strudelInitPromise) {
     await strudelInitPromise;
+    return;
+  }
+
+  strudelInitPromise = (async () => {
+    const { initStrudel } = await import('@strudel/web');
+    await initStrudel({ audioContext: ctx });
+    strudelReady = true;
+  })();
+
+  await strudelInitPromise;
 }
 
-export async function playIntroMusic(): Promise<void> {
-    await initStrudelMusic();
-    const { evaluate } = await import('@strudel/web');
-    await evaluate(INTRO_MUSIC_CODE, true);
+export async function playIntroMusic(ctx?: AudioContext): Promise<void> {
+  await initStrudelMusic(ctx);
+  const { evaluate } = await import('@strudel/web');
+  await evaluate(INTRO_MUSIC_CODE, true);
 }
 
 export async function stopIntroMusic(): Promise<void> {
-    try {
-        const { hush } = await import('@strudel/web');
-        hush();
-    } catch {
-        // Ignore if not initialized
-    }
+  try {
+    const { hush } = await import('@strudel/web');
+    hush();
+  } catch {
+    // Ignore if not initialized
+  }
 }

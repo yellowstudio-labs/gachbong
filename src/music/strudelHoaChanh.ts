@@ -44,33 +44,33 @@ stack(
 let strudelReady2 = false;
 let strudelInitPromise2: Promise<unknown> | null = null;
 
-export async function initStrudelMusic2(): Promise<void> {
-    if (strudelReady2) return;
-    if (strudelInitPromise2) {
-        await strudelInitPromise2;
-        return;
-    }
-
-    strudelInitPromise2 = (async () => {
-        const { initStrudel } = await import('@strudel/web');
-        await initStrudel();
-        strudelReady2 = true;
-    })();
-
+export async function initStrudelMusic2(ctx?: AudioContext): Promise<void> {
+  if (strudelReady2) return;
+  if (strudelInitPromise2) {
     await strudelInitPromise2;
+    return;
+  }
+
+  strudelInitPromise2 = (async () => {
+    const { initStrudel } = await import('@strudel/web');
+    await initStrudel({ audioContext: ctx });
+    strudelReady2 = true;
+  })();
+
+  await strudelInitPromise2;
 }
 
-export async function playHoaChanhMusic(): Promise<void> {
-    await initStrudelMusic2();
-    const { evaluate } = await import('@strudel/web');
-    await evaluate(HOA_CHANH_MUSIC_CODE, true);
+export async function playHoaChanhMusic(ctx?: AudioContext): Promise<void> {
+  await initStrudelMusic2(ctx);
+  const { evaluate } = await import('@strudel/web');
+  await evaluate(HOA_CHANH_MUSIC_CODE, true);
 }
 
 export async function stopHoaChanhMusic(): Promise<void> {
-    try {
-        const { hush } = await import('@strudel/web');
-        hush();
-    } catch {
-        // Ignore if not initialized
-    }
+  try {
+    const { hush } = await import('@strudel/web');
+    hush();
+  } catch {
+    // Ignore if not initialized
+  }
 }

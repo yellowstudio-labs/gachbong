@@ -140,20 +140,25 @@ void CanvasRenderer::drawTileBackground(double x, double y, double size,
   ctx_.set("shadowColor", std::string("transparent"));
   ctx_.set("shadowBlur", 0.0);
 
-  if (selected) {
-    ctx_.set("strokeStyle", std::string("rgba(255,215,0,1.0)"));
-    ctx_.set("lineWidth", 4.0);
-    ctx_.set("shadowColor", std::string("rgba(255,215,0,0.8)"));
-    ctx_.set("shadowBlur", 10.0);
-    ctx_.call<void>("stroke");
-    ctx_.set("shadowColor", std::string("transparent"));
-    ctx_.set("shadowBlur", 0.0);
-  } else if (highlighted) {
-    ctx_.set("strokeStyle", std::string("rgba(255,0,128,1.0)"));
-    ctx_.set("lineWidth", 5.0);
-    ctx_.set("shadowColor", std::string("rgba(255,0,128,0.8)"));
-    ctx_.set("shadowBlur", 15.0);
-    ctx_.call<void>("stroke");
+  if (selected || highlighted) {
+    // Redraw path to ensure stroke works in Safari Canvas2D
+    ctx_.call<void>("beginPath");
+    ctx_.call<void>("roundRect", rx, ry, w, h, radius);
+    ctx_.call<void>("closePath");
+
+    if (selected) {
+      ctx_.set("strokeStyle", std::string("rgba(255,215,0,1.0)"));
+      ctx_.set("lineWidth", 4.0);
+      ctx_.set("shadowColor", std::string("rgba(255,215,0,0.8)"));
+      ctx_.set("shadowBlur", 10.0);
+      ctx_.call<void>("stroke");
+    } else if (highlighted) {
+      ctx_.set("strokeStyle", std::string("rgba(255,0,128,1.0)"));
+      ctx_.set("lineWidth", 6.0);
+      ctx_.set("shadowColor", std::string("rgba(255,0,128.0.8)"));
+      ctx_.set("shadowBlur", 15.0);
+      ctx_.call<void>("stroke");
+    }
     ctx_.set("shadowColor", std::string("transparent"));
     ctx_.set("shadowBlur", 0.0);
   }

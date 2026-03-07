@@ -67,11 +67,8 @@ export function GameBoard({
             engine.renderSingleTile(selectedTile.row, selectedTile.col, tileSize, true, false);
         }
 
-        // Render hint highlights
-        if (hintTiles) {
-            engine.renderSingleTile(hintTiles[0].row, hintTiles[0].col, tileSize, false, true);
-            engine.renderSingleTile(hintTiles[1].row, hintTiles[1].col, tileSize, false, true);
-        }
+        // Render hint highlights (now handled by CSS overlay)
+        // We no longer draw them on the canvas
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [engine, tileSize, status, selectedTile, hintTiles, remainingTiles, boardVersion]);
 
@@ -125,16 +122,43 @@ export function GameBoard({
 
     return (
         <div className="board-wrapper">
-            <canvas
-                ref={canvasRef}
-                className="board-canvas"
-                onPointerDown={handlePointerDown}
-                style={{
-                    touchAction: 'none',
-                    width: `${canvasWidth}px`,
-                    height: `${canvasHeight}px`,
-                }}
-            />
+            <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
+                <canvas
+                    ref={canvasRef}
+                    className="board-canvas"
+                    onPointerDown={handlePointerDown}
+                    style={{
+                        touchAction: 'none',
+                        width: `${canvasWidth}px`,
+                        height: `${canvasHeight}px`,
+                        display: 'block'
+                    }}
+                />
+
+                {/* CSS Blinking Hints Overlay */}
+                {hintTiles && (
+                    <>
+                        <div
+                            className="hint-overlay-blink"
+                            style={{
+                                top: `${(hintTiles[0].row / rows) * 100}%`,
+                                left: `${(hintTiles[0].col / cols) * 100}%`,
+                                width: `${(1 / cols) * 100}%`,
+                                height: `${(1 / rows) * 100}%`
+                            }}
+                        />
+                        <div
+                            className="hint-overlay-blink"
+                            style={{
+                                top: `${(hintTiles[1].row / rows) * 100}%`,
+                                left: `${(hintTiles[1].col / cols) * 100}%`,
+                                width: `${(1 / cols) * 100}%`,
+                                height: `${(1 / rows) * 100}%`
+                            }}
+                        />
+                    </>
+                )}
+            </div>
         </div>
     );
 }

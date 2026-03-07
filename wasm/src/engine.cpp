@@ -110,8 +110,11 @@ void renderSingleTile(int row, int col, double tileSize, bool selected,
 
   PatternType type = static_cast<PatternType>(grid[row][col]);
   int palIdx = palGrid[row][col] % PALETTE_COUNT;
+
+  RenderOptions opts;
+  // Apply the rendering options exactly as V2 so clipRect operates safely
   renderPattern(g_renderer, type, PALETTES[palIdx], x + tileSize / 2,
-                y + tileSize / 2, tileSize);
+                y + tileSize / 2, tileSize, opts);
 }
 
 void renderPath(val pathArray, double tileSize) {

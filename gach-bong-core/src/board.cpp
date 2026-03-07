@@ -36,6 +36,12 @@ bool Board::removePair(int r1, int c1, int r2, int c2) {
   grid_[r1][c1] = -1;
   grid_[r2][c2] = -1;
   remainingTiles_ -= 2;
+
+  // Auto-shuffle if no more valid moves are available
+  if (remainingTiles_ > 0 && !isSolvable()) {
+    shuffle();
+  }
+
   return true;
 }
 
@@ -52,7 +58,7 @@ PathResult Board::checkMatch(int r1, int c1, int r2, int c2) {
       paletteGrid_[r1][c1] != paletteGrid_[r2][c2])
     return {false, {}, 0};
 
-  return Pathfinder::findPath(grid_, r1, c1, r2, c2);
+  return Pathfinder::findPath(getCombinedGrid(), r1, c1, r2, c2);
 }
 
 std::pair<std::pair<int, int>, std::pair<int, int>> Board::getHint() {
@@ -119,9 +125,29 @@ void Board::generateBoard(int numPatterns) {
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine rng(seed);
 
+  // Pool of all patterns to shuffle for random games
+  int totalAvailablePatterns = getPatternCount();
+  std::vector<int> allPatterns(totalAvailablePatterns);
+  for (int i = 0; i < totalAvailablePatterns; ++i)
+    allPatterns[i] = i;
+
+  // Pool of allowed palettes (exclude 9 - Đêm Phố)
+  std::vector<int> allowedPalettes;
+  for (int p = 0; p < 12; ++p) {
+    if (p != 9)
+      allowedPalettes.push_back(p);
+  }
+
+  std::shuffle(allPatterns.begin(), allPatterns.end(), rng);
+  std::shuffle(allowedPalettes.begin(), allowedPalettes.end(), rng);
+
+  int actualNumPatterns = std::min(numPatterns, totalAvailablePatterns);
+  std::vector<int> activePatterns(allPatterns.begin(),
+                                  allPatterns.begin() + actualNumPatterns);
+
   for (int i = 0; i < numPairs; i++) {
-    int type = i % numPatterns;
-    int palette = i % 12; // 12 palettes available
+    int type = activePatterns[i % actualNumPatterns];
+    int palette = allowedPalettes[i % allowedPalettes.size()];
     tiles.push_back(type);
     tiles.push_back(type);
     palettes.push_back(palette);
