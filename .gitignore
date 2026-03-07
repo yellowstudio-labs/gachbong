@@ -25,6 +25,7 @@ dist-ssr
 
 # WASM build artifacts
 wasm/build/
+tools/*/build/
 
 # Core lib build artifacts
 gach-bong-core/build/
