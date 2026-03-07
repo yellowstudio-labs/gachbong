@@ -288,6 +288,9 @@ export function PatternShowcase({ engine }: PatternShowcaseProps) {
             {selectedPattern !== null && selectedPalette !== null && desc && (
                 <div className="showcase-detail" onClick={() => { setSelectedPattern(null); setSelectedPalette(null); }}>
                     <div className="showcase-detail-card" onClick={e => e.stopPropagation()}>
+                        <button className="showcase-close-btn" onClick={() => { setSelectedPattern(null); setSelectedPalette(null); }} aria-label="Đóng">
+                            ✕
+                        </button>
                         <div className="showcase-detail-top">
                             <div className="showcase-detail-single">
                                 <canvas
@@ -320,10 +323,12 @@ export function PatternShowcase({ engine }: PatternShowcaseProps) {
                                         Mạch gạch
                                     </label>
                                 </div>
-                                <canvas
-                                    ref={tessCanvasRef}
-                                    className="showcase-tess-canvas"
-                                />
+                                <div className="showcase-tess-canvas-wrapper">
+                                    <canvas
+                                        ref={tessCanvasRef}
+                                        className="showcase-tess-canvas"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -333,9 +338,6 @@ export function PatternShowcase({ engine }: PatternShowcaseProps) {
                             <p className="showcase-detail-story">{desc.story}</p>
                             <p className="showcase-detail-palette">Bảng màu: {PALETTE_NAMES[selectedPalette]}</p>
                         </div>
-                        <button className="action-btn" onClick={() => { setSelectedPattern(null); setSelectedPalette(null); }}>
-                            Đóng
-                        </button>
                     </div>
                 </div>
             )}

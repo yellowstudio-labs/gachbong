@@ -223,7 +223,7 @@ button {
     flex-direction: column;
     align-items: flex-start;
     padding: 80px 24px 32px;
-    gap: 4px;
+    gap: 24px;
     background: var(--bg-primary);
     box-shadow: var(--shadow-xl);
     transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -676,13 +676,14 @@ button {
   margin-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
 .about-tech-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 0.9rem;
   color: var(--text-secondary);
 }
@@ -768,8 +769,10 @@ button {
 .difficulty-btn {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  text-align: center;
+  gap: 4px;
   padding: clamp(14px, 3vw, 18px) clamp(16px, 4vw, 24px);
   border: var(--border-medium);
   border-radius: var(--radius-md);
@@ -800,6 +803,7 @@ button {
   align-items: center;
   gap: 10px;
   z-index: 1;
+  white-space: nowrap;
 }
 
 .difficulty-info {
@@ -1157,6 +1161,8 @@ button {
   gap: clamp(8px, 1.5vw, 14px);
   overflow-x: auto;
   padding-bottom: 4px;
+  padding-top: 16px;
+  margin-top: -16px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(200, 90, 60, 0.15) transparent;
@@ -1208,6 +1214,7 @@ button {
 }
 
 .showcase-detail-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1215,11 +1222,38 @@ button {
   padding: clamp(20px, 4vw, 36px);
   max-width: 680px;
   width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--bg-card);
   border: var(--border-light);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
   animation: modalPopIn 0.3s ease-out;
+}
+
+.showcase-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  z-index: 10;
+}
+
+.showcase-close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+  transform: scale(1.1);
 }
 
 .showcase-detail-top {
@@ -1314,10 +1348,12 @@ button {
 .showcase-presets-btns {
   display: flex;
   gap: 8px;
+  width: 100%;
 }
 
 .preset-btn {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   gap: 3px;
@@ -1368,10 +1404,9 @@ button {
 
 .showcase-tess-controls {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
 .showcase-tess-sizes {
@@ -1420,11 +1455,19 @@ button {
   cursor: pointer;
 }
 
-.showcase-tess-canvas {
+.showcase-tess-canvas-wrapper {
+  max-width: 100%;
+  overflow: auto;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
+  display: flex;
+  justify-content: center;
+  -webkit-overflow-scrolling: touch;
+}
+
+.showcase-tess-canvas {
   image-rendering: auto;
-  max-width: 100%;
+  display: block;
 }
 
 /* ===== Glass Card (kept for backward compat) ===== */
@@ -1623,5 +1666,17 @@ button {
   .score-bar {
     flex-wrap: nowrap;
     padding: 8px 16px;
+  }
+}
+
+/* ===== Utilities ===== */
+.desktop-break {
+  display: none;
+}
+
+@media (min-width: 481px) {
+  .desktop-break {
+    display: block;
+    content: "";
   }
 }

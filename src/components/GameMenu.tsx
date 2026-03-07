@@ -18,15 +18,21 @@ export function GameMenu({ onStartGame, onShowcase, onMV }: GameMenuProps) {
             <div className="difficulty-buttons">
                 <button className="difficulty-btn easy" onClick={() => onStartGame('easy')}>
                     <span className="difficulty-label">🌱 Dễ</span>
-                    <span className="difficulty-info">6×6 · 5 phút · 6 mẫu</span>
+                    <span className="difficulty-info">
+                        6×6<br className="desktop-break" />5 phút &middot; 6 mẫu
+                    </span>
                 </button>
                 <button className="difficulty-btn medium" onClick={() => onStartGame('medium')}>
                     <span className="difficulty-label">⚡ Trung Bình</span>
-                    <span className="difficulty-info">8×8 · 4 phút · 8 mẫu</span>
+                    <span className="difficulty-info">
+                        8×8<br className="desktop-break" />4 phút &middot; 8 mẫu
+                    </span>
                 </button>
                 <button className="difficulty-btn hard" onClick={() => onStartGame('hard')}>
                     <span className="difficulty-label">🔥 Khó</span>
-                    <span className="difficulty-info">10×10 · 3 phút · 12 mẫu</span>
+                    <span className="difficulty-info">
+                        10×10<br className="desktop-break" />3 phút &middot; 12 mẫu
+                    </span>
                 </button>
             </div>
             {onShowcase && (
