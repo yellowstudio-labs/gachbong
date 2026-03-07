@@ -1,73 +1,78 @@
-# React + TypeScript + Vite
+# Gạch Bông 🎨
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Vietnamese-style cement tile matching game built with C++, WebAssembly (asm.js), and React.
 
-Currently, two official plugins are available:
+🌐 **Play online:** [gachbong.yellowstudio.vn](https://gachbong.yellowstudio.vn)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Overview
 
-## React Compiler
+**Gạch Bông** (Vietnamese Cement Tiles) is a tile-matching puzzle game inspired by the beautiful traditional cement tiles found across Vietnam. The game engine is written in C++ and compiled to JavaScript (asm.js) via [Emscripten](https://emscripten.org/), with a React + TypeScript frontend powered by [Vite](https://vitejs.dev/).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Project Structure
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+gach-bong/
+├── gach-bong-core/       # C++ core game engine (static library)
+│   ├── include/          # Public headers (geometry, renderer, patterns, board, pathfinder)
+│   └── src/              # Implementation (board logic, pattern rendering, pathfinding)
+├── wasm/                 # Emscripten wrapper & build config
+│   ├── src/              # WASM bindings (engine.cpp, canvas_renderer.cpp)
+│   └── CMakeLists.txt    # CMake config for Emscripten build
+├── src/                  # React + TypeScript web frontend
+├── public/               # Static assets & compiled JS output
+├── deploy/               # Deployment scripts
+└── .github/workflows/    # CI/CD pipeline
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Prerequisites
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Node.js** >= 20
+- **Emscripten SDK** (for compiling C++ to asm.js) — [Installation guide](https://emscripten.org/docs/getting_started/downloads.html)
+- **CMake** >= 3.13
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
+
+### 1. Install web dependencies
+
+```bash
+npm install
 ```
+
+### 2. Run the web app (dev mode)
+
+```bash
+npm run dev
+```
+
+### 3. Build the C++ engine (requires Emscripten)
+
+```bash
+# First time: configure & build
+npm run wasm:build
+
+# Subsequent rebuilds
+npm run wasm:rebuild
+
+# Clean build artifacts
+npm run wasm:clean
+```
+
+The compiled output (`gach_bong.js`) will be placed in `wasm/build/`.
+
+### 4. Build for production
+
+```bash
+npm run build
+```
+
+## How It Works
+
+1. **`gach-bong-core/`** — A pure C++ library containing the game logic: board management, tile pattern rendering (20 traditional Vietnamese patterns), and pathfinding for tile matching.
+
+2. **`wasm/`** — An Emscripten wrapper that exposes the C++ engine to JavaScript via embind. It compiles to asm.js (a single `.js` file) for easy auditing and portability.
+
+3. **`src/`** — A React + TypeScript frontend that loads the compiled engine and renders the game using HTML5 Canvas.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
