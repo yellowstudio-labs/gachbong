@@ -55,6 +55,7 @@ private:
 
   void generateBoard(int numPatterns);
   void ensureSolvable();
+  std::vector<std::vector<int>> getCombinedGrid() const;
 };
 
 } // namespace gachbong

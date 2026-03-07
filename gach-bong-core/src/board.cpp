@@ -29,7 +29,8 @@ int Board::getPaletteIdx(int row, int col) const {
 bool Board::removePair(int r1, int c1, int r2, int c2) {
   if (grid_[r1][c1] < 0 || grid_[r2][c2] < 0)
     return false;
-  if (grid_[r1][c1] != grid_[r2][c2])
+  if (grid_[r1][c1] != grid_[r2][c2] ||
+      paletteGrid_[r1][c1] != paletteGrid_[r2][c2])
     return false;
 
   grid_[r1][c1] = -1;
@@ -47,14 +48,15 @@ PathResult Board::checkMatch(int r1, int c1, int r2, int c2) {
     return {false, {}, 0};
   if (r1 == r2 && c1 == c2)
     return {false, {}, 0};
-  if (grid_[r1][c1] != grid_[r2][c2])
+  if (grid_[r1][c1] != grid_[r2][c2] ||
+      paletteGrid_[r1][c1] != paletteGrid_[r2][c2])
     return {false, {}, 0};
 
   return Pathfinder::findPath(grid_, r1, c1, r2, c2);
 }
 
 std::pair<std::pair<int, int>, std::pair<int, int>> Board::getHint() {
-  return Pathfinder::findAnyMatch(grid_);
+  return Pathfinder::findAnyMatch(getCombinedGrid());
 }
 
 void Board::shuffle() {
@@ -96,7 +98,9 @@ void Board::shuffle() {
 
 bool Board::isCleared() const { return remainingTiles_ == 0; }
 
-bool Board::isSolvable() const { return Pathfinder::isSolvable(grid_); }
+bool Board::isSolvable() const {
+  return Pathfinder::isSolvable(getCombinedGrid());
+}
 
 void Board::generateBoard(int numPatterns) {
   int totalCells = rows_ * cols_;
@@ -178,6 +182,20 @@ void Board::ensureSolvable() {
 
     maxAttempts--;
   }
+}
+
+std::vector<std::vector<int>> Board::getCombinedGrid() const {
+  std::vector<std::vector<int>> combined(rows_, std::vector<int>(cols_, -1));
+  for (int r = 0; r < rows_; r++) {
+    for (int c = 0; c < cols_; c++) {
+      if (grid_[r][c] >= 0) {
+        // Encode pattern in lower 8 bits, palette in next 8 bits
+        combined[r][c] =
+            (grid_[r][c] & 0xFF) | ((paletteGrid_[r][c] & 0xFF) << 8);
+      }
+    }
+  }
+  return combined;
 }
 
 } // namespace gachbong

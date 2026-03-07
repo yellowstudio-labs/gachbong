@@ -117,15 +117,10 @@ export function GameBoard({
         }
     }, [status, canvasWidth, canvasHeight, tileSize, rows, cols, onTileClick]);
 
-    const handleClick = useCallback((e: React.MouseEvent) => {
+    const handlePointerDown = useCallback((e: React.PointerEvent) => {
+        // e.preventDefault() is generally discouraged on PointerEvents in React.
+        // We use touch-action: none in CSS instead to prevent scrolling when tapping the canvas.
         handleInteraction(e.clientX, e.clientY);
-    }, [handleInteraction]);
-
-    const handleTouch = useCallback((e: React.TouchEvent) => {
-        e.preventDefault();
-        if (e.touches.length > 0) {
-            handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
-        }
     }, [handleInteraction]);
 
     return (
@@ -133,9 +128,9 @@ export function GameBoard({
             <canvas
                 ref={canvasRef}
                 className="board-canvas"
-                onClick={handleClick}
-                onTouchStart={handleTouch}
+                onPointerDown={handlePointerDown}
                 style={{
+                    touchAction: 'none',
                     width: `${canvasWidth}px`,
                     height: `${canvasHeight}px`,
                 }}

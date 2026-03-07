@@ -141,13 +141,21 @@ void CanvasRenderer::drawTileBackground(double x, double y, double size,
   ctx_.set("shadowBlur", 0.0);
 
   if (selected) {
-    ctx_.set("strokeStyle", std::string("rgba(255,215,0,0.9)"));
-    ctx_.set("lineWidth", 3.0);
+    ctx_.set("strokeStyle", std::string("rgba(255,215,0,1.0)"));
+    ctx_.set("lineWidth", 4.0);
+    ctx_.set("shadowColor", std::string("rgba(255,215,0,0.8)"));
+    ctx_.set("shadowBlur", 10.0);
     ctx_.call<void>("stroke");
+    ctx_.set("shadowColor", std::string("transparent"));
+    ctx_.set("shadowBlur", 0.0);
   } else if (highlighted) {
-    ctx_.set("strokeStyle", std::string("rgba(100,255,218,0.7)"));
-    ctx_.set("lineWidth", 2.0);
+    ctx_.set("strokeStyle", std::string("rgba(255,0,128,1.0)"));
+    ctx_.set("lineWidth", 5.0);
+    ctx_.set("shadowColor", std::string("rgba(255,0,128,0.8)"));
+    ctx_.set("shadowBlur", 15.0);
     ctx_.call<void>("stroke");
+    ctx_.set("shadowColor", std::string("transparent"));
+    ctx_.set("shadowBlur", 0.0);
   }
 }
 

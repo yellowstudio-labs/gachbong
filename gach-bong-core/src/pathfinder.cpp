@@ -26,89 +26,103 @@ PathResult Pathfinder::findPath(const std::vector<std::vector<int>> &board,
   if (board[r1][c1] != board[r2][c2])
     return {false, {}, 0};
 
-  // BFS: visited[r][c][dir] = minimum turns to reach (r,c) coming from
-  // direction dir Expand grid by 1 in each direction to allow paths outside the
-  // board
+  // BFS: Find path with at most 2 turns.
+  // We can track the path by exploring ray by ray (straight lines),
+  // which naturally counts the number of line segments (turns = segments - 1).
+
+  // Create an expanded board to allow paths along the outside edges
   int eRows = rows + 2;
   int eCols = cols + 2;
-
-  // Map coordinates: board (r,c) -> expanded (r+1, c+1)
   int sr = r1 + 1, sc = c1 + 1;
   int er = r2 + 1, ec = c2 + 1;
 
-  // visited[r][c][d] = min turns to reach here from direction d, -1 = unvisited
-  std::vector<std::vector<std::vector<int>>> visited(
-      eRows, std::vector<std::vector<int>>(eCols, std::vector<int>(4, 999)));
+  // visited[r][c] = minimum number of turns to reach (r,c)
+  std::vector<std::vector<int>> visited(eRows, std::vector<int>(eCols, 999));
 
-  std::queue<BFSState> q;
+  // Queue stores: {current row, current col, current number of turns, path
+  // taken}
+  struct State {
+    int r, c, turns;
+    std::vector<std::pair<int, int>> path;
+  };
+  std::queue<State> q;
 
-  // Start: try all 4 directions from source
-  for (int d = 0; d < 4; d++) {
-    int nr = sr + DR[d];
-    int nc = sc + DC[d];
-    if (nr < 0 || nr >= eRows || nc < 0 || nc >= eCols)
-      continue;
-
-    // Target reached directly
-    if (nr == er && nc == ec) {
-      return {true, {{r1, c1}, {r2, c2}}, 0};
-    }
-
-    // Check if cell is passable (empty in original board, or outside original
-    // board)
-    int origR = nr - 1, origC = nc - 1;
-    bool passable = (origR < 0 || origR >= rows || origC < 0 || origC >= cols ||
-                     board[origR][origC] < 0);
-
-    if (passable && 0 < visited[nr][nc][d]) {
-      visited[nr][nc][d] = 0;
-      q.push({nr, nc, d, 0, {{r1, c1}, {origR, origC}}});
-    }
-  }
+  q.push({sr, sc, 0, {{r1, c1}}});
+  visited[sr][sc] = 0;
 
   PathResult best = {false, {}, 999};
 
   while (!q.empty()) {
-    auto cur = q.front();
+    State cur = q.front();
     q.pop();
 
+    // If we've already found a better or equal valid path (by turns), we can
+    // stop exploring this branch if it has more turns than what we already
+    // found. Or if we reach the max allowed turns (2).
     if (cur.turns > 2)
       continue;
-    if (cur.turns >= best.turns && best.valid)
+    if (best.valid && cur.turns >= best.turns)
       continue;
 
+    // Explore straight lines in all 4 directions from current position
     for (int d = 0; d < 4; d++) {
-      int newTurns = cur.turns + (d != cur.dir ? 1 : 0);
-      if (newTurns > 2)
-        continue;
+      int nr = cur.r;
+      int nc = cur.c;
+      int step = 1;
 
-      int nr = cur.r + DR[d];
-      int nc = cur.c + DC[d];
-      if (nr < 0 || nr >= eRows || nc < 0 || nc >= eCols)
-        continue;
+      while (true) {
+        nr += DR[d];
+        nc += DC[d];
 
-      // Reached target
-      if (nr == er && nc == ec) {
-        if (!best.valid || newTurns < best.turns ||
-            (newTurns == best.turns &&
-             cur.path.size() + 1 < best.path.size())) {
-          auto path = cur.path;
-          path.push_back({r2, c2});
-          best = {true, path, newTurns};
+        // Out of expanded bounds
+        if (nr < 0 || nr >= eRows || nc < 0 || nc >= eCols)
+          break;
+
+        // Check if we reached the target
+        if (nr == er && nc == ec) {
+          std::vector<std::pair<int, int>> newPath = cur.path;
+          newPath.push_back({r2, c2});
+
+          // Only update if it's better
+          if (!best.valid || cur.turns < best.turns ||
+              (cur.turns == best.turns && newPath.size() < best.path.size())) {
+            best = {true, newPath, cur.turns};
+          }
+          break; // Target found in this direction, no need to go further (it
+                 // would just be going through the target)
         }
-        continue;
-      }
 
-      // Check passable
-      int origR = nr - 1, origC = nc - 1;
-      bool passable = (origR < 0 || origR >= rows || origC < 0 ||
-                       origC >= cols || board[origR][origC] < 0);
+        // Check if the cell is impassable
+        int origR = nr - 1, origC = nc - 1;
+        bool isOutside =
+            (origR < 0 || origR >= rows || origC < 0 || origC >= cols);
+        bool isEmpty = isOutside || board[origR][origC] < 0;
 
-      if (passable && newTurns < visited[nr][nc][d]) {
-        visited[nr][nc][d] = newTurns;
-        auto newPath = cur.path;
-        newPath.push_back({origR, origC});
-        q.push({nr, nc, d, newTurns, newPath});
+        if (!isEmpty) {
+          break; // Hit a tile, can't continue in this direction
+        }
+
+        // If it's a valid empty cell, we check if we can add it to the queue
+        // We only add it if we reach it with fewer turns than previously
+        // recorded. Or equal turns, but we just continue straight anyway.
+        // Adding the state to queue happens when we turn in NEXT iterations.
+        // What we queue here is the "intersection point" for the next turn.
+
+        // Only enqueue if the number of turns we'll have (cur.turns) is <= what
+        // was previously needed to get here. Wait, the next segment will
+        // require a turn from this cell, so the next state will have `cur.turns
+        // + 1`. However, we record `cur.turns + 1` in `visited` for this cell
+        // because any path emanating from this cell in a *different* direction
+        // will have that many turns.
+        int nextTurns = cur.turns + 1;
+
+        if (nextTurns <= 2 && nextTurns <= visited[nr][nc]) {
+          visited[nr][nc] = nextTurns;
+
+          std::vector<std::pair<int, int>> newPath = cur.path;
+          newPath.push_back({origR, origC});
+          q.push({nr, nc, nextTurns, newPath});
+        }
       }
     }
   }
@@ -116,14 +130,15 @@ PathResult Pathfinder::findPath(const std::vector<std::vector<int>> &board,
   return best;
 }
 
+#include <unordered_map>
+
 std::pair<std::pair<int, int>, std::pair<int, int>>
 Pathfinder::findAnyMatch(const std::vector<std::vector<int>> &board) {
   int rows = board.size();
   int cols = board[0].size();
 
-  // Collect tiles by type
-  std::vector<std::vector<std::pair<int, int>>> tilesByType(
-      12); // max 12 patterns
+  // Collect tiles by type (can be combined ID now)
+  std::unordered_map<int, std::vector<std::pair<int, int>>> tilesByType;
 
   for (int r = 0; r < rows; r++) {
     for (int c = 0; c < cols; c++) {
@@ -134,7 +149,8 @@ Pathfinder::findAnyMatch(const std::vector<std::vector<int>> &board) {
   }
 
   // Check each type for a valid pair
-  for (const auto &tiles : tilesByType) {
+  for (const auto &pair : tilesByType) {
+    const auto &tiles = pair.second;
     for (size_t i = 0; i < tiles.size(); i++) {
       for (size_t j = i + 1; j < tiles.size(); j++) {
         auto result = findPath(board, tiles[i].first, tiles[i].second,
