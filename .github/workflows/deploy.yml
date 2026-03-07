@@ -1,0 +1,84 @@
+# ============================================
+# Gạch Bông - GitHub Actions CI/CD
+# Auto-deploy to server on push to master
+# ============================================
+
+name: Deploy to Server
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    environment: DEPLOY_DEV
+
+    steps:
+      # ---- Checkout code ----
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---- Setup Node.js ----
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # ---- Install dependencies ----
+      - name: Install dependencies
+        run: npm ci
+
+      # ---- Build ----
+      - name: Build production bundle
+        run: npm run build
+
+      # ---- Verify build output ----
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed - dist directory not found"
+            exit 1
+          fi
+          echo "📊 Build output:"
+          du -sh dist
+          ls -la dist
+
+      # ---- Setup SSH ----
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ---- Ensure deploy directory exists ----
+      - name: Create deploy directory
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "sudo mkdir -p /var/www/gachbong && sudo chown ${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }} /var/www/gachbong"
+
+      # ---- Deploy via rsync ----
+      - name: Deploy to server
+        run: |
+          rsync -avz --delete \
+            --exclude='.DS_Store' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            dist/ \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/gachbong/
+
+      # ---- Fix permissions & reload Nginx ----
+      - name: Fix permissions & reload Nginx
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "sudo chown -R www-data:www-data /var/www/gachbong && sudo systemctl reload nginx"
+
+      # ---- Cleanup ----
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
