@@ -5,12 +5,20 @@ import { playHoaChanhMusic, stopHoaChanhMusic } from '../music/strudelHoaChanh';
 import '../styles/MusicVideo.css';
 
 let globalAudioContext: AudioContext | null = null;
+let iosSilentAudioPlayed = false;
+
+// A tiny 0.1s silent MP3 file in base64.
+// Playing this via HTML5 <audio> forces iOS to route subsequent Web Audio
+// through the "Media" channel, bypassing the physical Mute switch.
+const SILENT_MP3_BASE64 = 'data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqquqaA==';
 
 /**
  * iOS Safari requires AudioContext to be resumed synchronously within a
  * user gesture event handler. This helper synchronously creates (if needed),
  * plays a single-frame silent buffer to unlock the Web Audio API, and
  * returns the AudioContext so it can be passed to Strudel.
+ * 
+ * It also plays an HTML5 silent audio element once to defeat the physical mute switch.
  */
 async function getUnlockedAudioContext(): Promise<AudioContext> {
     if (!globalAudioContext) {
@@ -18,15 +26,35 @@ async function getUnlockedAudioContext(): Promise<AudioContext> {
     }
     const ctx = globalAudioContext;
 
-    // Play silent buffer to unlock
+    // Defeat iOS physical Mute Switch (play HTML5 audio once)
+    if (!iosSilentAudioPlayed) {
+        try {
+            const audioEl = new Audio(SILENT_MP3_BASE64);
+            audioEl.setAttribute('x-webkit-airplay', 'deny');
+            audioEl.preload = 'auto';
+            audioEl.loop = false;
+            // HTML5 play() returns a Promise. Awaiting it during a user gesture is safe.
+            await audioEl.play();
+            iosSilentAudioPlayed = true;
+        } catch (e) {
+            console.warn('Silent audio play failed', e);
+        }
+    }
+
+    // Play silent buffer to unlock Web Audio API Context
     const silentBuffer = ctx.createBuffer(1, 1, 22050);
     const source = ctx.createBufferSource();
     source.buffer = silentBuffer;
     source.connect(ctx.destination);
     source.start(0);
 
+    // Some browsers (iOS) complain if resume is awaited, some require it.
+    // Calling it directly ensures it hits the API synchronously.
     if (ctx.state === 'suspended') {
-        await ctx.resume();
+        const resumePromise = ctx.resume();
+        if (resumePromise && typeof resumePromise.catch === 'function') {
+            resumePromise.catch((e) => console.warn('AudioContext resume warn:', e));
+        }
     }
     return ctx;
 }
