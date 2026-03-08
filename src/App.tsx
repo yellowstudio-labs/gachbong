@@ -6,6 +6,7 @@ import { HomePage } from './pages/HomePage';
 import { GamePage } from './pages/GamePage';
 import { CollectionPage } from './pages/CollectionPage';
 import { AboutPage } from './pages/AboutPage';
+import { StudioPage } from './pages/StudioPage';
 import './styles/index.css';
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
           <Route path="/" element={<HomePage engine={engine} />} />
           <Route path="/game" element={<GamePage engine={engine} />} />
           <Route path="/collection" element={<CollectionPage engine={engine} />} />
+          <Route path="/studio" element={<StudioPage engine={engine} />} />
           <Route path="/about" element={<AboutPage />} />
         </Routes>
         <Footer />

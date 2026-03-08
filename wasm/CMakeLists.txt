@@ -29,7 +29,8 @@ set_target_properties(gach_bong PROPERTIES
         -sALLOW_MEMORY_GROWTH=1 \
         -sENVIRONMENT='web' \
         -sNO_EXIT_RUNTIME=1 \
-        -O3 \
+        -sWASM=0 \
+        -O0 \
     "
 )
 

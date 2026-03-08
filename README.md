@@ -65,6 +65,20 @@ The compiled output (`gach_bong.js`) will be placed in `wasm/build/`.
 npm run build
 ```
 
+### 5. Export Avatar Thumbnail
+
+A C++ tool is provided to render a 512x512 PNG avatar displaying a 2x2 grid of traditional tiles using the core renderer.
+
+```bash
+cd tools/export_avatar
+mkdir -p build && cd build
+cmake ..
+make
+./export_avatar ../gachbong-icon.png
+```
+
+This generates `gachbong-icon.png` inside the `tools/export_avatar` directory.
+
 ## How It Works
 
 1. **`gach-bong-core/`** — A pure C++ library containing the game logic: board management, tile pattern rendering (20 traditional Vietnamese patterns), and pathfinding for tile matching.

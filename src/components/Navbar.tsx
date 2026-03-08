@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 const NAV_LINKS = [
     { to: '/', label: 'Trang Chủ' },
     { to: '/collection', label: 'Bộ Sưu Tập' },
+    { to: '/studio', label: 'Studio' },
     { to: '/game', label: 'Game' },
     { to: '/about', label: 'Giới Thiệu' },
 ];
