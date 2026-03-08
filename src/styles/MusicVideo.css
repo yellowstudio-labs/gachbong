@@ -685,6 +685,18 @@
     letter-spacing: 0.05em;
 }
 
+.music-player-error {
+    font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+    color: #E57373;
+    background: rgba(229, 115, 115, 0.1);
+    border: 1px solid rgba(229, 115, 115, 0.2);
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin: 8px 0;
+    max-width: 280px;
+    animation: mvFadeInUp 0.3s ease-out;
+}
+
 /* ===== MV Settings Modal ===== */
 .mv-settings-overlay {
     position: fixed;

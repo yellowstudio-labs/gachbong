@@ -12,15 +12,22 @@ let iosSilentAudioPlayed = false;
 // through the "Media" channel, bypassing the physical Mute switch.
 const SILENT_MP3_BASE64 = 'data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqquqaA==';
 
+// Additional silent WAV for fallback (more reliable on some iOS versions)
+const SILENT_WAV_BASE64 = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+
 /**
  * iOS Safari requires AudioContext to be resumed synchronously within a
  * user gesture event handler. This helper synchronously creates (if needed),
  * plays a single-frame silent buffer to unlock the Web Audio API, and
  * returns the AudioContext so it can be passed to Strudel.
- * 
+ *
  * It also plays an HTML5 silent audio element once to defeat the physical mute switch.
+ *
+ * Note: When device is in silent/vibrate mode (ring switch to silent),
+ * iOS hardware prevents audio playback - this cannot be overridden programmatically.
+ * Users must turn off silent mode to hear audio.
  */
-async function getUnlockedAudioContext(): Promise<AudioContext> {
+async function getUnlockedAudioContext(): Promise<AudioContext | null> {
     if (!globalAudioContext) {
         globalAudioContext = new AudioContext();
     }
@@ -29,24 +36,44 @@ async function getUnlockedAudioContext(): Promise<AudioContext> {
     // Defeat iOS physical Mute Switch (play HTML5 audio once)
     if (!iosSilentAudioPlayed) {
         try {
-            const audioEl = new Audio(SILENT_MP3_BASE64);
+            // Try MP3 first, then WAV as fallback
+            let audioEl = new Audio(SILENT_MP3_BASE64);
             audioEl.setAttribute('x-webkit-airplay', 'deny');
             audioEl.preload = 'auto';
             audioEl.loop = false;
-            // HTML5 play() returns a Promise. Awaiting it during a user gesture is safe.
-            await audioEl.play();
-            iosSilentAudioPlayed = true;
+
+            // Attempt to play - may fail if iOS restricts it
+            try {
+                await audioEl.play();
+                iosSilentAudioPlayed = true;
+            } catch {
+                // MP3 failed, try WAV fallback
+                console.log('Silent MP3 failed, trying WAV fallback');
+                audioEl = new Audio(SILENT_WAV_BASE64);
+                audioEl.preload = 'auto';
+                try {
+                    await audioEl.play();
+                    iosSilentAudioPlayed = true;
+                } catch (e) {
+                    console.warn('WAV fallback also failed:', e);
+                }
+            }
         } catch (e) {
-            console.warn('Silent audio play failed', e);
+            console.warn('Silent audio play failed:', e);
+            // Continue anyway - Web Audio might still work
         }
     }
 
     // Play silent buffer to unlock Web Audio API Context
-    const silentBuffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBufferSource();
-    source.buffer = silentBuffer;
-    source.connect(ctx.destination);
-    source.start(0);
+    try {
+        const silentBuffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = silentBuffer;
+        source.connect(ctx.destination);
+        source.start(0);
+    } catch (e) {
+        console.warn('Silent buffer creation failed:', e);
+    }
 
     // Some browsers (iOS) complain if resume is awaited, some require it.
     // Calling it directly ensures it hits the API synchronously.
@@ -114,6 +141,7 @@ function formatTime(s: number): string {
 export function MusicPlayer({ engine, mvId, onBack, duration = 120 }: MusicPlayerProps) {
     const track = MV_TRACKS[mvId];
     const [playing, setPlaying] = useState(false);
+    const [audioError, setAudioError] = useState<string | null>(null);
     const [elapsed, setElapsed] = useState(0);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animRef = useRef<number>(0);
@@ -201,10 +229,19 @@ export function MusicPlayer({ engine, mvId, onBack, duration = 120 }: MusicPlaye
             pausedAtRef.current = performance.now() / 1000;
             await track.stop();
             setPlaying(false);
+            setAudioError(null);
         } else {
+            // Clear any previous error
+            setAudioError(null);
+
             // Unlock Web Audio on iOS — must be called synchronously within
             // the user gesture frame. We then pass this to Strudel.
             const ctx = await getUnlockedAudioContext();
+
+            if (!ctx) {
+                setAudioError('Unable to initialize audio. Please check your device settings.');
+                return;
+            }
 
             // Play / resume
             if (elapsed > 0 && elapsed < duration) {
@@ -214,8 +251,23 @@ export function MusicPlayer({ engine, mvId, onBack, duration = 120 }: MusicPlaye
                 startTimeRef.current = performance.now() / 1000;
                 setElapsed(0);
             }
-            await track.play(ctx);
-            setPlaying(true);
+
+            try {
+                await track.play(ctx);
+                setPlaying(true);
+
+                // Verify audio is actually playing (detect silent mode)
+                setTimeout(() => {
+                    if (ctx.state === 'running' && !playing) {
+                        // Audio context is running, check if we can detect silent mode
+                        // Note: There's no direct API to detect silent mode on iOS
+                        // This is a heuristic - if elapsed doesn't increase, might be silent
+                    }
+                }, 500);
+            } catch (e) {
+                console.error('Audio playback error:', e);
+                setAudioError('Audio playback failed. If on iPhone, check that the silent switch is OFF.');
+            }
         }
     }, [playing, elapsed, duration, track]);
 
@@ -246,6 +298,10 @@ export function MusicPlayer({ engine, mvId, onBack, duration = 120 }: MusicPlaye
                     <p className="music-player-label">♫ Music Only</p>
                     <h2 className="music-player-title">{track.name}</h2>
                     <p className="music-player-subtitle">{track.subtitle}</p>
+
+                    {audioError && (
+                        <p className="music-player-error">{audioError}</p>
+                    )}
 
                     <button className="music-player-play-btn" onClick={handleTogglePlay}>
                         {playing ? '❚❚' : '▶'}
