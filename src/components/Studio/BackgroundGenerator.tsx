@@ -483,24 +483,26 @@ export function BackgroundGenerator({ engine }: BackgroundGeneratorProps) {
         {/* Pattern Selection */}
         <div className="settings-section">
           <h3>Hoa Văn</h3>
-          <select
-            value={patternId}
-            onChange={e => setPatternId(Number(e.target.value))}
-            className="settings-select"
-          >
-            {Object.entries(getPatternsByCategory('traditional_floral')).map(([_, p]) => (
-              <option key={p.id} value={p.id}>{p.nameVn}</option>
-            ))}
-            {Object.entries(getPatternsByCategory('geometric')).map(([_, p]) => (
-              <option key={p.id} value={p.id}>{p.nameVn}</option>
-            ))}
-            {Object.entries(getPatternsByCategory('nature')).map(([_, p]) => (
-              <option key={p.id} value={p.id}>{p.nameVn}</option>
-            ))}
-            {Object.entries(getPatternsByCategory('heritage')).map(([_, p]) => (
-              <option key={p.id} value={p.id}>{p.nameVn}</option>
-            ))}
-          </select>
+          <div className="select-wrapper">
+            <select
+              value={patternId}
+              onChange={e => setPatternId(Number(e.target.value))}
+              className="settings-select"
+            >
+              {Object.entries(getPatternsByCategory('traditional_floral')).map(([_, p]) => (
+                <option key={p.id} value={p.id}>{p.nameVn}</option>
+              ))}
+              {Object.entries(getPatternsByCategory('geometric')).map(([_, p]) => (
+                <option key={p.id} value={p.id}>{p.nameVn}</option>
+              ))}
+              {Object.entries(getPatternsByCategory('nature')).map(([_, p]) => (
+                <option key={p.id} value={p.id}>{p.nameVn}</option>
+              ))}
+              {Object.entries(getPatternsByCategory('heritage')).map(([_, p]) => (
+                <option key={p.id} value={p.id}>{p.nameVn}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Palette Selection */}
@@ -592,19 +594,21 @@ export function BackgroundGenerator({ engine }: BackgroundGeneratorProps) {
         {/* Resolution Selection */}
         <div className="settings-section">
           <h3>Dòng Máy</h3>
-          <select
-            value={resolutionId}
-            onChange={e => setResolutionId(e.target.value)}
-            className="settings-select"
-          >
-            {brandResolutions.map(rId => {
-              const preset = resolutionPresets.find(r => r.id === rId);
-              return preset ? (
-                <option key={rId} value={rId}>{preset.label}</option>
-              ) : null;
-            })}
-            <option value="custom">Tùy chỉnh...</option>
-          </select>
+          <div className="select-wrapper">
+            <select
+              value={resolutionId}
+              onChange={e => setResolutionId(e.target.value)}
+              className="settings-select"
+            >
+              {brandResolutions.map(rId => {
+                const preset = resolutionPresets.find(r => r.id === rId);
+                return preset ? (
+                  <option key={rId} value={rId}>{preset.label}</option>
+                ) : null;
+              })}
+              <option value="custom">Tùy chỉnh...</option>
+            </select>
+          </div>
 
           {resolutionId === 'custom' && (
             <div className="custom-resolution">
@@ -632,15 +636,17 @@ export function BackgroundGenerator({ engine }: BackgroundGeneratorProps) {
         {/* Format */}
         <div className="settings-section">
           <h3>Định Dạng</h3>
-          <select
-            value={format}
-            onChange={e => setFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
-            className="settings-select"
-          >
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-            <option value="webp">WebP</option>
-          </select>
+          <div className="select-wrapper">
+            <select
+              value={format}
+              onChange={e => setFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
+              className="settings-select"
+            >
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
 
           {(format === 'jpeg' || format === 'webp') && (
             <div className="quality-slider">

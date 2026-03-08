@@ -1955,9 +1955,37 @@ button {
     margin-bottom: 16px;
   }
 
+  /* Select wrapper for dropdown arrow */
+  .select-wrapper {
+    position: relative;
+    display: block;
+  }
+
+  .select-wrapper::after {
+    content: "▼";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 1;
+  }
+
   .settings-select {
-    padding: 10px 12px;
-    font-size: 0.9rem;
+    width: 100%;
+    padding: 14px 40px 14px 16px;
+    font-size: 1rem;
+    font-weight: 500;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
   }
 
   .export-buttons {

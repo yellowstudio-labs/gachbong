@@ -61,10 +61,12 @@ export const resolutionPresets: ResolutionPreset[] = [
   { id: 'pinterest-pin', label: 'Pinterest Pin - 1000×1500', width: 1000, height: 1500, category: 'Social' },
 
   // Avatar sizes - SQUARE
-  { id: 'avatar-128', label: 'Avatar 128×128', width: 128, height: 128, category: 'Other' },
   { id: 'avatar-256', label: 'Avatar 256×256', width: 256, height: 256, category: 'Other' },
+  { id: 'avatar-400', label: 'Avatar 400×400 (FB, IG, LinkedIn)', width: 400, height: 400, category: 'Other' },
   { id: 'avatar-512', label: 'Avatar 512×512', width: 512, height: 512, category: 'Other' },
-  { id: 'avatar-1024', label: 'Avatar 1024×1024', width: 1024, height: 1024, category: 'Other' },
+  { id: 'avatar-800', label: 'Avatar 800×800 (YouTube)', width: 800, height: 800, category: 'Other' },
+  { id: 'avatar-1024', label: 'Avatar 1024×1024 (HD)', width: 1024, height: 1024, category: 'Other' },
+  { id: 'avatar-custom', label: 'Tùy chỉnh', width: 0, height: 0, category: 'Other' },
 
   // Wallpaper sizes - PORTRAIT orientation
   { id: 'wallpaper-hd', label: 'HD Wallpaper - 1080×1920', width: 1080, height: 1920, category: 'Other' },

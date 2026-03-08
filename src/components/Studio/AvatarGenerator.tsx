@@ -70,7 +70,8 @@ const AVATAR_RESOLUTIONS = resolutionPresets.filter(
 export function AvatarGenerator({ engine }: AvatarGeneratorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gridSize, setGridSize] = useState<GridSize>(2);
-  const [resolutionId, setResolutionId] = useState('avatar-512');
+  const [resolutionId, setResolutionId] = useState('avatar-1024');
+  const [customSize, setCustomSize] = useState(1024);
   const [format, setFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
   const [quality, setQuality] = useState(92);
 
@@ -91,8 +92,11 @@ export function AvatarGenerator({ engine }: AvatarGeneratorProps) {
   // Get current resolution
   const getCurrentResolution = useCallback((): { width: number; height: number } => {
     const preset = resolutionPresets.find(r => r.id === resolutionId);
-    return preset ? { width: preset.width, height: preset.height } : { width: 512, height: 512 };
-  }, [resolutionId]);
+    if (resolutionId === 'avatar-custom') {
+      return { width: customSize, height: customSize };
+    }
+    return preset ? { width: preset.width, height: preset.height } : { width: 1024, height: 1024 };
+  }, [resolutionId, customSize]);
 
   // Render preview using renderPatternCustomPalette (more reliable)
   const renderPreview = useCallback(() => {
@@ -374,29 +378,48 @@ export function AvatarGenerator({ engine }: AvatarGeneratorProps) {
         {/* Resolution */}
         <div className="settings-section">
           <h3>Độ Phân Giải</h3>
-          <select
-            value={resolutionId}
-            onChange={e => setResolutionId(e.target.value)}
-            className="settings-select"
-          >
-            {AVATAR_RESOLUTIONS.map(r => (
-              <option key={r.id} value={r.id}>{r.label}</option>
-            ))}
-          </select>
+          <div className="select-wrapper">
+            <select
+              value={resolutionId}
+              onChange={e => setResolutionId(e.target.value)}
+              className="settings-select"
+            >
+              {AVATAR_RESOLUTIONS.map(r => (
+                <option key={r.id} value={r.id}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {resolutionId === 'avatar-custom' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'nowrap' }}>
+              <input
+                type="number"
+                value={customSize}
+                onChange={e => setCustomSize(Number(e.target.value))}
+                placeholder="Kích thước"
+                min={64}
+                max={4096}
+                style={{ width: 120, padding: '10px 12px', borderRadius: 8, border: '2px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
+              />
+              <span style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>px × px</span>
+            </div>
+          )}
         </div>
 
         {/* Format */}
         <div className="settings-section">
           <h3>Định Dạng</h3>
-          <select
-            value={format}
-            onChange={e => setFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
-            className="settings-select"
-          >
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-            <option value="webp">WebP</option>
-          </select>
+          <div className="select-wrapper">
+            <select
+              value={format}
+              onChange={e => setFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
+              className="settings-select"
+            >
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
           {(format === 'jpeg' || format === 'webp') && (
             <div className="quality-slider">
               <label>Chất lượng: {quality}%</label>
