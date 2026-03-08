@@ -52,10 +52,6 @@ export async function initStrudelMusic2(ctx?: AudioContext): Promise<void> {
   }
 
   strudelInitPromise2 = (async () => {
-    if (ctx) {
-      const { setAudioContext } = await import('@strudel/webaudio');
-      setAudioContext(ctx);
-    }
     const { initStrudel } = await import('@strudel/web');
     await initStrudel({ audioContext: ctx });
     strudelReady2 = true;
