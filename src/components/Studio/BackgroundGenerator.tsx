@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { patternList, getPatternsByCategory } from '../../data/patterns';
 import { resolutionPresets } from '../../data/resolutions';
-import { exportCanvas, generateThumbnail, hexToRgb } from '../../utils/imageExporter';
+import { exportCanvas, downloadCanvas, generateThumbnail, hexToRgb } from '../../utils/imageExporter';
 import { addGalleryItem } from '../../utils/galleryStorage';
 import type { CustomPalette } from '../../utils/galleryStorage';
 import type { GachBongModule, RenderOptions } from '../../engine/types';
@@ -246,7 +246,7 @@ export function BackgroundGenerator({ engine }: BackgroundGeneratorProps) {
   }, [renderPreview, resolutionId, enableWear, enableGrout]);
 
   // Handle export
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     const resolution = getCurrentResolution();
     const exportCanvasEl = document.createElement('canvas');
     exportCanvasEl.width = resolution.width;
@@ -325,7 +325,7 @@ export function BackgroundGenerator({ engine }: BackgroundGeneratorProps) {
     const timestamp = Date.now();
     const filename = `gach-bong-${patternName.toLowerCase().replace(/\s+/g, '-')}-${timestamp}`;
 
-    exportCanvas(exportCanvasEl, { format, quality: quality / 100, filename });
+    await exportCanvas(exportCanvasEl, { format, quality: quality / 100, filename });
 
     const thumbnail = generateThumbnail(exportCanvasEl);
     const ratio = resolution.width / resolution.height;
@@ -339,6 +339,102 @@ export function BackgroundGenerator({ engine }: BackgroundGeneratorProps) {
         resolution,
         format,
           enableWear,
+        enableGrout,
+      },
+    });
+
+    window.dispatchEvent(new CustomEvent('gallery-updated'));
+  }, [engine, patternId, paletteId, useCustomPalette, customPalette, getCurrentResolution, gridDensity, format, quality, enableWear, enableGrout]);
+
+  // Handle save (download directly)
+  const handleSave = useCallback(() => {
+    const resolution = getCurrentResolution();
+    const exportCanvasEl = document.createElement('canvas');
+    exportCanvasEl.width = resolution.width;
+    exportCanvasEl.height = resolution.height;
+    const ctx = exportCanvasEl.getContext('2d');
+    if (!ctx) return;
+
+    const tilesAcross = gridDensity;
+    const groutWidth = enableGrout ? 2 : 0;
+
+    let tileSize: number;
+    if (groutWidth > 0) {
+      tileSize = (resolution.width - groutWidth * (tilesAcross + 1)) / tilesAcross;
+    } else {
+      tileSize = resolution.width / tilesAcross;
+    }
+
+    const rows = Math.ceil(resolution.height / (tileSize + groutWidth));
+    const cols = tilesAcross;
+
+    const renderOptions: RenderOptions = {
+      enableWear,
+      showGrout: enableGrout,
+      groutWidth: groutWidth,
+      textureIntensity: 0.2,
+      wearAmount: 0.3,
+      padding: 0.02,
+    };
+
+    if (useCustomPalette) {
+      const rgb = {
+        primary: hexToRgb(customPalette.primary),
+        secondary: hexToRgb(customPalette.secondary),
+        accent: hexToRgb(customPalette.accent),
+        background: hexToRgb(customPalette.background),
+        detail: hexToRgb(customPalette.detail),
+      };
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const x = col * tileSize;
+          const y = row * tileSize;
+          ctx.save();
+          ctx.translate(x, y);
+          engine.renderPatternCustomPalette(
+            ctx,
+            patternId,
+            rgb.primary.r, rgb.primary.g, rgb.primary.b,
+            rgb.secondary.r, rgb.secondary.g, rgb.secondary.b,
+            rgb.accent.r, rgb.accent.g, rgb.accent.b,
+            rgb.background.r, rgb.background.g, rgb.background.b,
+            rgb.detail.r, rgb.detail.g, rgb.detail.b,
+            tileSize,
+            renderOptions
+          );
+          ctx.restore();
+        }
+      }
+    } else {
+      engine.renderTessellation(
+        ctx,
+        patternId,
+        paletteId,
+        cols,
+        rows,
+        tileSize,
+        renderOptions
+      );
+    }
+
+    const patternName = patternList.find(p => p.id === patternId)?.nameVn || 'pattern';
+    const timestamp = Date.now();
+    const filename = `gach-bong-${patternName.toLowerCase().replace(/\s+/g, '-')}-${timestamp}`;
+
+    downloadCanvas(exportCanvasEl, { format, quality: quality / 100, filename });
+
+    const thumbnail = generateThumbnail(exportCanvasEl);
+    const ratio = resolution.width / resolution.height;
+    addGalleryItem({
+      type: 'background',
+      thumbnail,
+      settings: {
+        pattern: patternId,
+        palette: useCustomPalette ? customPalette : paletteId,
+        ratio: ratio > 1 ? 'landscape' : ratio < 1 ? 'portrait' : 'square',
+        resolution,
+        format,
+        enableWear,
         enableGrout,
       },
     });
@@ -560,9 +656,14 @@ export function BackgroundGenerator({ engine }: BackgroundGeneratorProps) {
           )}
         </div>
 
-        <button className="export-button" onClick={handleExport}>
-          📥 Xuất Ảnh
-        </button>
+        <div className="export-buttons">
+          <button className="export-button export-button--secondary" onClick={handleSave}>
+            💾 Lưu Ảnh
+          </button>
+          <button className="export-button" onClick={handleExport}>
+            📤 Chia Sẻ
+          </button>
+        </div>
       </div>
     </div>
   );

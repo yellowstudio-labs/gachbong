@@ -1,13 +1,75 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { GameBoard } from '../components/GameBoard';
 import { GameOverModal } from '../components/GameOverModal';
 import { ScoreBoard } from '../components/ScoreBoard';
 import { DIFFICULTY_CONFIGS } from '../engine/types';
-import type { GachBongModule, Difficulty } from '../engine/types';
+import type { GachBongModule, Difficulty, RenderOptions } from '../engine/types';
 
 interface GamePageProps {
     engine: GachBongModule;
+}
+
+const GAME_LOGO_RENDER_OPTIONS: RenderOptions = {
+    enableTexture: false,
+    enableWear: false,
+    enableBevel: true,
+    bevelSize: 0.025,
+    saturation: 0.85,
+    brightness: 1.0,
+    showGrout: true,
+    groutWidth: 1,
+    groutColor: { r: 245, g: 240, b: 230 },
+};
+
+function GameLogoIcon({ engine }: { engine: GachBongModule }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const animRef = useRef<number>(0);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const size = 80;
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+        ctx.scale(dpr, dpr);
+
+        const tileSize = size;
+        const cols = 1;
+        const rows = 1;
+
+        const render = () => {
+            // Random pattern and palette for each frame
+            const patternIdx = Math.floor(Math.random() * 10);
+            const paletteIdx = Math.floor(Math.random() * 10);
+
+            try {
+                engine.renderTessellation(ctx, patternIdx, paletteIdx, cols, rows, tileSize, GAME_LOGO_RENDER_OPTIONS);
+            } catch {
+                ctx.fillStyle = '#F5F0E8';
+                ctx.fillRect(0, 0, size, size);
+            }
+
+            // Random interval between 200ms - 800ms
+            const nextDelay = 200 + Math.random() * 600;
+            animRef.current = window.setTimeout(render, nextDelay);
+        };
+
+        render();
+
+        return () => {
+            if (animRef.current) clearTimeout(animRef.current);
+        };
+    }, [engine]);
+
+    return (
+        <canvas ref={canvasRef} style={{ width: 80, height: 80 }} />
+    );
 }
 
 export function GamePage({ engine }: GamePageProps) {
@@ -66,7 +128,9 @@ export function GamePage({ engine }: GamePageProps) {
             {/* Game Menu */}
             {!inGame && state.status === 'menu' && (
                 <div className="menu-container">
-                    <div className="menu-logo">🎨</div>
+                    <div className="menu-logo">
+                        <GameLogoIcon engine={engine} />
+                    </div>
                     <h1 className="menu-title">Gạch Bông</h1>
                     <p className="menu-description">
                         Nối các viên gạch bông có cùng hoa văn. Tất cả hoạ tiết được render

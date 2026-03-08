@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { patternList } from '../../data/patterns';
 import { resolutionPresets } from '../../data/resolutions';
-import { exportCanvas, generateThumbnail } from '../../utils/imageExporter';
+import { exportCanvas, downloadCanvas, generateThumbnail } from '../../utils/imageExporter';
 import { addGalleryItem } from '../../utils/galleryStorage';
 import type { CustomPalette as LocalCustomPalette } from '../../utils/galleryStorage';
 import type { GachBongModule } from '../../engine/types';
@@ -244,6 +244,66 @@ export function AvatarGenerator({ engine }: AvatarGeneratorProps) {
     window.dispatchEvent(new CustomEvent('gallery-updated'));
   }, [engine, gridSize, cells, getCurrentResolution, format, quality]);
 
+  // Handle save (download directly)
+  const handleSave = useCallback(() => {
+    const resolution = getCurrentResolution();
+    const exportCanvasEl = document.createElement('canvas');
+    exportCanvasEl.width = resolution.width;
+    exportCanvasEl.height = resolution.height;
+    const ctx = exportCanvasEl.getContext('2d');
+    if (!ctx) return;
+
+    const cellSize = Math.min(resolution.width / gridSize, resolution.height / gridSize);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, resolution.width, resolution.height);
+
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const cellIndex = row * gridSize + col;
+        const cell = cells[cellIndex];
+        if (!cell) continue;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, cellSize, cellSize);
+        ctx.clip();
+
+        engine.renderPatternPreview(
+          ctx,
+          cell.patternId,
+          cell.paletteId,
+          cellSize
+        );
+
+        ctx.restore();
+        ctx.translate(cellSize, 0);
+      }
+      ctx.translate(-gridSize * cellSize, cellSize);
+    }
+
+    const timestamp = Date.now();
+    const filename = `gach-bong-avatar-${gridSize}x${gridSize}-${timestamp}`;
+
+    downloadCanvas(exportCanvasEl, { format, quality: quality / 100, filename });
+
+    const thumbnail = generateThumbnail(exportCanvasEl);
+    addGalleryItem({
+      type: 'avatar',
+      thumbnail,
+      settings: {
+        patterns: cells.slice(0, gridSize * gridSize).map(c => c.patternId),
+        palette: cells[0].useCustomPalette ? cells[0].customPalette : cells[0].paletteId,
+        ratio: '1:1',
+        resolution,
+        format,
+        gridSize,
+      },
+    });
+
+    window.dispatchEvent(new CustomEvent('gallery-updated'));
+  }, [engine, gridSize, cells, getCurrentResolution, format, quality]);
+
   const resolution = getCurrentResolution();
   const selectedCell = cells[selectedCellIndex];
 
@@ -351,9 +411,14 @@ export function AvatarGenerator({ engine }: AvatarGeneratorProps) {
           )}
         </div>
 
-        <button className="export-button" onClick={handleExport}>
-          📥 Xuất Avatar
-        </button>
+        <div className="export-buttons">
+          <button className="export-button export-button--secondary" onClick={handleSave}>
+            💾 Lưu Ảnh
+          </button>
+          <button className="export-button" onClick={handleExport}>
+            📤 Chia Sẻ
+          </button>
+        </div>
       </div>
 
       {/* Cell Config Modal */}

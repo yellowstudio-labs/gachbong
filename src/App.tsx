@@ -39,7 +39,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app">
-        <Navbar />
+        <Navbar engine={engine} />
         <Routes>
           <Route path="/" element={<HomePage engine={engine} />} />
           <Route path="/game" element={<GamePage engine={engine} />} />

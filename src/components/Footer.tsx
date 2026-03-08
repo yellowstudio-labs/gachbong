@@ -8,7 +8,7 @@ export function Footer() {
                     <span>Made with ❤️ in Vietnam 🇻🇳</span>
                 </div>
                 <p className="footer-credit">
-                    Gạch Bông — A Yellow Studio Labs product · gachbong.yellowstudio.vn
+                    Gạch Bông — A Yellow Studio Labs product · yellowstudio.vn
                 </p>
             </div>
         </footer>

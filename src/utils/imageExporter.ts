@@ -11,9 +11,9 @@ export interface ExportOptions {
 }
 
 /**
- * Export canvas to downloadable image file
+ * Download canvas as file directly
  */
-export const exportCanvas = (
+export const downloadCanvas = (
   canvas: HTMLCanvasElement,
   options: ExportOptions
 ): void => {
@@ -22,6 +22,46 @@ export const exportCanvas = (
   const mimeType = format === 'jpeg' ? 'image/jpeg' : `image/${format}`;
   const dataUrl = canvas.toDataURL(mimeType, quality);
 
+  const link = document.createElement('a');
+  link.download = `${filename}.${format}`;
+  link.href = dataUrl;
+  link.click();
+};
+
+/**
+ * Export canvas using Web Share API when available
+ * Falls back to download for older browsers
+ */
+export const exportCanvas = async (
+  canvas: HTMLCanvasElement,
+  options: ExportOptions
+): Promise<void> => {
+  const { format, quality = 0.92, filename = 'gach-bong-export' } = options;
+
+  const mimeType = format === 'jpeg' ? 'image/jpeg' : `image/${format}`;
+  const dataUrl = canvas.toDataURL(mimeType, quality);
+
+  // Convert data URL to Blob for sharing
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  const file = new File([blob], `${filename}.${format}`, { type: mimeType });
+
+  // Check if Web Share API is available and supports files
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'Gạch Bông',
+        text: 'Tạo từ Gạch Bông Studio',
+      });
+      return;
+    } catch (err) {
+      // User cancelled or share failed, fall through to download
+      if ((err as Error).name === 'AbortError') return;
+    }
+  }
+
+  // Fallback: download file
   const link = document.createElement('a');
   link.download = `${filename}.${format}`;
   link.href = dataUrl;
