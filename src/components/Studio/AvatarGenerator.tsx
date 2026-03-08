@@ -6,6 +6,11 @@ import { addGalleryItem } from '../../utils/galleryStorage';
 import type { CustomPalette as LocalCustomPalette } from '../../utils/galleryStorage';
 import type { GachBongModule } from '../../engine/types';
 
+// Detect Android device
+const isAndroid = (): boolean => {
+  return typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+};
+
 // Render pattern thumbnail
 function renderPatternThumbnail(engine: GachBongModule, patternId: number, paletteId: number, size: number): string {
   const canvas = document.createElement('canvas');
@@ -435,15 +440,31 @@ export function AvatarGenerator({ engine }: AvatarGeneratorProps) {
         </div>
 
         <div className="export-buttons">
-          <button className="export-button export-button--secondary mobile-only" onClick={handleExport}>
-            💾 Lưu Ảnh
-          </button>
-          <button className="export-button export-button--secondary desktop-only" onClick={handleSave}>
-            💾 Lưu Ảnh
-          </button>
-          <button className="export-button desktop-only" onClick={handleExport}>
-            📤 Chia Sẻ
-          </button>
+          {/* Android: show both buttons like desktop */}
+          {isAndroid() ? (
+            <>
+              <button className="export-button export-button--secondary" onClick={handleSave}>
+                💾 Lưu Ảnh
+              </button>
+              <button className="export-button" onClick={handleExport}>
+                📤 Chia Sẻ
+              </button>
+            </>
+          ) : (
+            <>
+              {/* iOS/other mobile: single button */}
+              <button className="export-button export-button--secondary mobile-only" onClick={handleExport}>
+                💾 Lưu Ảnh
+              </button>
+              {/* Desktop: show both buttons */}
+              <button className="export-button export-button--secondary desktop-only" onClick={handleSave}>
+                💾 Lưu Ảnh
+              </button>
+              <button className="export-button desktop-only" onClick={handleExport}>
+                📤 Chia Sẻ
+              </button>
+            </>
+          )}
         </div>
       </div>
 
