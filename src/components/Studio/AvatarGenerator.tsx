@@ -412,10 +412,13 @@ export function AvatarGenerator({ engine }: AvatarGeneratorProps) {
         </div>
 
         <div className="export-buttons">
-          <button className="export-button export-button--secondary" onClick={handleSave}>
+          <button className="export-button export-button--secondary mobile-only" onClick={handleExport}>
             💾 Lưu Ảnh
           </button>
-          <button className="export-button" onClick={handleExport}>
+          <button className="export-button export-button--secondary desktop-only" onClick={handleSave}>
+            💾 Lưu Ảnh
+          </button>
+          <button className="export-button desktop-only" onClick={handleExport}>
             📤 Chia Sẻ
           </button>
         </div>

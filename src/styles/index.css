@@ -1831,7 +1831,7 @@ button {
 
 /* ===== Studio Page ===== */
 .studio-page {
-  max-width: 1400px;
+  max-width: var(--container-max);
 }
 
 .studio-header {
@@ -1874,6 +1874,176 @@ button {
   }
 }
 
+/* Mobile Studio - match MV section padding */
+@media (max-width: 768px) {
+  .page-container.studio-page {
+    padding-left: 16px;
+    padding-right: 16px;
+    max-width: 100%;
+  }
+
+  .studio-header {
+    margin-bottom: 24px;
+  }
+
+  .studio-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .studio-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .studio-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 8px;
+    font-size: 0.85rem;
+  }
+
+  .studio-content>div {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Background & Avatar Generator */
+  .background-generator,
+  .avatar-generator {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .generator-preview {
+    order: 1;
+  }
+
+  .generator-settings {
+    order: 2;
+  }
+
+  .generator-preview,
+  .generator-settings {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  /* Gallery */
+  .gallery-container {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .gallery-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .gallery-grid {
+    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Settings */
+  .settings-section {
+    margin-bottom: 16px;
+  }
+
+  .settings-select {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .export-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Preview Effects */
+  .preview-effects {
+    padding: 12px;
+  }
+
+  .effects-options {
+    gap: 8px;
+  }
+
+  /* Sliders */
+  .density-slider,
+  .quality-slider {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .density-value,
+  .quality-value {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  /* Device & Palette */
+  .device-options,
+  .palette-selector {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .palette-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .custom-palette {
+    gap: 8px;
+  }
+
+  .color-picker-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .color-picker-row input[type="color"] {
+    width: 100%;
+    height: 36px;
+  }
+
+  /* Grid Config (Avatar) */
+  .grid-config {
+    gap: 6px;
+  }
+
+  .grid-cell-button {
+    padding: 8px 4px;
+    min-height: 60px;
+  }
+
+  .cell-number {
+    font-size: 0.7rem;
+  }
+
+  .cell-pattern {
+    font-size: 0.65rem;
+  }
+
+  .pattern-grid-modal {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-size-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+}
+
 .studio-tab {
   display: flex;
   align-items: center;
@@ -1913,9 +2083,30 @@ button {
 }
 
 @media (max-width: 900px) {
+
   .background-generator,
   .avatar-generator {
     grid-template-columns: 1fr;
+  }
+
+  /* Mobile: show single Lưu Ảnh button */
+  .export-buttons .desktop-only {
+    display: none;
+  }
+  .export-buttons .mobile-only {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 901px) {
+  /* Desktop: show both buttons */
+  .export-buttons .mobile-only {
+    display: none;
+  }
+  .export-buttons .desktop-only {
+    display: flex;
   }
 }
 
@@ -2364,8 +2555,13 @@ button.export-button:hover {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
@@ -2380,8 +2576,15 @@ button.export-button:hover {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .modal-content h3 {
